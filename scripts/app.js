@@ -185,16 +185,17 @@ var cafeLocation = function(data) {
   });
 
   this.marker.addListener('click', function() {
-    self.infowindow.open(map, self.marker);
-    toggleBounce();
+
+    self.toggleBounce();
   });
 
   //Full credit to google for this handy bounce toggle function. https://developers.google.com/maps/documentation/javascript/markers#animate
-  function toggleBounce() {
+  this.toggleBounce = function() {
     if (self.marker.getAnimation() !== null) {
       self.marker.setAnimation(null);
     } else {
       self.marker.setAnimation(google.maps.Animation.BOUNCE);
+      self.infowindow.open(map, self.marker);
       stopBounce(self.marker);
     }
   }
@@ -213,13 +214,13 @@ function AppViewModel() {
 
   this.allCafes = ko.observableArray([]);
   this.filter = ko.observable(false);
+  this.buttonText = ko.observable();
 
   cafes.forEach(function(objItem) {
     self.allCafes.push(new cafeLocation(objItem));
   });
 
-  var button = document.getElementById('filterButton');
-  button.innerHTML = 'Only show cafes with Wifi';
+  this.buttonText("Only show cafes with Wifi");
 
   // Big time praise for the man who put together this article on knockout utility functions. I couldn't have filtered markers without him!
   //http://www.knockmeout.net/2011/04/utility-functions-in-knockoutjs.html
@@ -227,9 +228,10 @@ function AppViewModel() {
   self.filterToggle = function() {
 
     if (self.filter() === false) {
-      button.innerHTML = 'Show all Cafes';
+      this.buttonText("Show All Cafes");
       self.filter(true);
     } else if (self.filter() === true) {
+      this.buttonText("Only show cafes with Wifi");
       AppViewModel();
       self.filter(false);
     }
@@ -238,7 +240,7 @@ function AppViewModel() {
   this.filteredCafes = ko.computed(function() {
     if (self.filter() === false) {
       return self.allCafes();
-    } else {
+    } else if (self.filter() === true) {
       return ko.utils.arrayFilter(self.allCafes(), function(cafeLocation) {
         if (cafeLocation.wifi === false) {
           cafeLocation.marker.setMap(null);

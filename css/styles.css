@@ -19,7 +19,7 @@ html {
   flex-direction: row;
 }
 
-.banner {
+header {
   width: 100%;
   text-align: center;
 }
