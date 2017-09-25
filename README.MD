@@ -8,5 +8,5 @@ My map is fixed on a city called Kelowna in British Columbia Canada. I've visite
 My app displays a list of all the cafes in Kelowna and then you can click the filter to display just the ones that have a Wifi connection. There is also a handy current weather report from [DarkSky.net](https://darksky.net/dev) .
 
 ### How to run the App?
-1. [Click Here to Launch the App](www.google.ca)
+1. [Click Here to Launch the App](https://infiniteerrors.github.io/UdacityMapProject/)
 2. Click the map markers to check if they have Wifi or you want to see their name. Also you can use the button to filter the markers/names to cafes that only have Wifi.
