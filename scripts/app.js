@@ -103,10 +103,8 @@ var cafes = [{
   wifi: true,
   rating: 4.6
 }];
-
+//Just a couple global variables being declared for the map.
 var map;
-var service;
-// Constructing a Model and storing some of the app's awesome requested data.
 
 var kelowna = {
   lat: 49.883810,
@@ -140,11 +138,10 @@ function weatherReport() {
 
 //This function creates the map.
 function mapGenerator() {
-
   map = new google.maps.Map(document.getElementById('mapDisplay'), {
     center: kelowna,
     zoom: 14
-  })
+  });
 }
 
 function mapFail() {
@@ -169,7 +166,6 @@ var cafeLocation = function(data) {
   } else {
     wifiStatus = '<div class="wifiFalse">' + 'No Wifi' + '</div>';
   }
-
 
   this.contentString = data.name + ' has a rating of ' + data.rating + ' in Kelowna.' + '<p>' + wifiStatus + '</p>';
 
@@ -208,8 +204,7 @@ var cafeLocation = function(data) {
       marker.setAnimation(null);
     }, 2000);
   }
-
-}
+};
 
 // The apps view model, all cafe locations are added to the allCafes array and then displayed based on the filter.
 function AppViewModel() {
@@ -228,17 +223,17 @@ function AppViewModel() {
 
   // Big time praise for the man who put together this article on knockout utility functions. I couldn't have filtered markers without him!
   //http://www.knockmeout.net/2011/04/utility-functions-in-knockoutjs.html
-  //This filter function check to see if the Cafe have Wifi.
+  //This filter function checks to see if the Cafes have Wifi.
   self.filterToggle = function() {
 
     if (self.filter() === false) {
       button.innerHTML = 'Show all Cafes';
       self.filter(true);
     } else if (self.filter() === true) {
-      new AppViewModel();
+      AppViewModel();
       self.filter(false);
     }
-  }
+  };
 
   this.filteredCafes = ko.computed(function() {
     if (self.filter() === false) {
@@ -251,11 +246,9 @@ function AppViewModel() {
         if (cafeLocation.wifi === true) {
           return cafeLocation;
         }
-
       });
     }
   }, self);
-
 }
 
 //This function is ran when the google script it loaded and kicks off the app!
