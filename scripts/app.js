@@ -253,6 +253,6 @@ function AppViewModel() {
 
 //This function is ran when the google script it loaded and kicks off the app!
 function runApp() {
-  ko.applyBindings(new AppViewModel());
   weatherReport();
+  ko.applyBindings(new AppViewModel());
 }
