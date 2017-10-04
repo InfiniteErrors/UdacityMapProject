@@ -233,7 +233,6 @@ function AppViewModel() {
           cafeLocation.marker.setVisible(true);
           return cafeLocation;
         });
-        break;
       case 2:
         return ko.utils.arrayFilter(self.allCafes(), function(cafeLocation) {
           if (cafeLocation.wifi === false) {
@@ -243,8 +242,6 @@ function AppViewModel() {
             return cafeLocation;
           }
         });
-        break;
-
       default:
         return self.allCafes();
     }
