@@ -164,14 +164,12 @@ var cafeLocation = function(data) {
   this.infowindow = new google.maps.InfoWindow({});
   this.marker.addListener('click', function() {
     $.when(addressPull()).done(function(data) {
-      console.log(data.response.venues[0].contact.formattedPhone);
       if (data.response.venues[0].contact.formattedPhone === undefined) {
         self.phone = 'No number in database :(';
       } else {
         self.phone = data.response.venues[0].contact.formattedPhone;
       }
       self.infowindow.setContent(self.name + ' has a rating of ' + self.rating + ' in Kelowna.' + '<p>' + wifiStatus + '</p>' + 'Phone: ' + self.phone);
-      self.infowindow.open(map, self.marker);
     });
     self.toggleBounce();
   });
@@ -182,10 +180,10 @@ var cafeLocation = function(data) {
       self.marker.setAnimation(null);
     } else {
       self.marker.setAnimation(google.maps.Animation.BOUNCE);
-
+      self.infowindow.open(map, self.marker);
       stopBounce(self.marker);
     }
-  }
+  };
 
   //Stops the markers from bouncing. This is simply a timer function adapted from https://stackoverflow.com/questions/7339200/bounce-a-pin-in-google-maps-once
   function stopBounce(marker) {
@@ -253,7 +251,7 @@ function AppViewModel() {
   }, self);
 }
 
-//The ignition function! 
+//The ignition function!
 function runApp() {
   ko.applyBindings(new AppViewModel());
 }

@@ -10,3 +10,6 @@ My app displays a list of all the cafes in Kelowna and then you can click the fi
 ### How to run the App?
 1. [Click Here to Launch the App](https://infiniteerrors.github.io/UdacityMapProject/)
 2. Click the map markers to check if they have Wifi or you want to see their name. Also you can use the button to filter the markers/names to cafes that only have Wifi.
+
+#### Run Locally
+1. To run the app on your local system. Download the entire set of source files, and then launch the 'index.html' file 👍.
