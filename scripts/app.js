@@ -1,5 +1,4 @@
 //Kelowna cafe locations data model.
-
 var cafes = [{
   name: "Giobean Espresso",
   lat: 49.8912783,
@@ -103,40 +102,18 @@ var cafes = [{
   wifi: true,
   rating: 4.6
 }];
-//Just a couple global variables being declared for the map.
+
+//Global variables being declared for the map and foursquare API.
 var map;
+var clientID;
+var clientSecret;
 
 var kelowna = {
   lat: 49.883810,
   lng: -119.493367
 };
 
-
-//A little Ajax request from a fantastic weather API service https://darksky.net/dev
-function weatherReport() {
-
-  function convertCelcius(num) {
-    result = (num - 32) / 1.8;
-    return Math.round(result);
-  }
-
-  var darkSkyURL = "https://api.darksky.net/forecast/e62b10a3fbf00ad6c00ee3452d0554fd/" + kelowna.lat + "," + kelowna.lng;
-  $.ajax({
-    url: darkSkyURL,
-    dataType: "jsonp",
-    success: function(data) {
-      var weatherInput = document.getElementById('weather');
-
-      weatherInput.innerHTML = "<p class='weatherCredit'>" + 'Darksky Weather Report' + '</p>' + '<h2>' + convertCelcius(data.currently.apparentTemperature) +
-        '&#8451; ' + '</h2>' + "<span class='weatherSummary'>" + data.currently.summary + '</span>';
-    },
-    error: function() {
-      alert('Darksky Weather request failed');
-    }
-  });
-}
-
-//This function creates the map.
+//This function creates the Google map.
 function mapGenerator() {
   map = new google.maps.Map(document.getElementById('mapDisplay'), {
     center: kelowna,
@@ -144,12 +121,11 @@ function mapGenerator() {
   });
 }
 
-function mapFail() {
-  alert('Looks like there was a error trying to load the map. Please try again later.');
+function failAlert() {
+  alert('Looks like something went wrong here :(');
 }
 
 //This is the data model function for each cafe location on the map. This is where the marker,info windows and animations are set.
-
 var cafeLocation = function(data) {
   var self = this;
   this.name = data.name;
@@ -157,26 +133,26 @@ var cafeLocation = function(data) {
   this.lng = data.lng;
   this.rating = data.rating;
   this.wifi = data.wifi;
-  this.visible = true;
+  this.phone = "";
 
   var wifiStatus;
-
   if (self.wifi === true) {
     wifiStatus = '<div class="wifiTrue">' + 'Offers Wifi' + '</div>';
   } else {
     wifiStatus = '<div class="wifiFalse">' + 'No Wifi' + '</div>';
   }
 
-  this.contentString = data.name + ' has a rating of ' + data.rating + ' in Kelowna.' + '<p>' + wifiStatus + '</p>';
-
-  this.infowindow = new google.maps.InfoWindow({
-    content: self.contentString
-  });
-
-  if (this.visible === false) {
-    this.marker.setMap(null);
+  //foursquare API call
+  var foursquareSearch = "https://api.foursquare.com/v2/venues/search?ll=" + this.lat + "," + this.lng + "&client_id=" + clientID + '&client_secret=' + clientSecret + '&v=20170303' + '&query=' + this.name;
+  function addressPull() {
+    return $.ajax({
+      dataType: 'json',
+      url: foursquareSearch,
+      data: data.response,
+    });
   }
 
+//Creates a new marker and places it on the map.
   this.marker = new google.maps.Marker({
     position: new google.maps.LatLng(data.lat, data.lng),
     map: map,
@@ -184,22 +160,34 @@ var cafeLocation = function(data) {
     title: data.name
   });
 
+//Creates a blank info window on each marker and waits until its clicked to insert data from data model and foursquare.
+  this.infowindow = new google.maps.InfoWindow({});
   this.marker.addListener('click', function() {
-
+    $.when(addressPull()).done(function(data) {
+      console.log(data.response.venues[0].contact.formattedPhone);
+      if (data.response.venues[0].contact.formattedPhone === undefined) {
+        self.phone = 'No number in database :(';
+      } else {
+        self.phone = data.response.venues[0].contact.formattedPhone;
+      }
+      self.infowindow.setContent(self.name + ' has a rating of ' + self.rating + ' in Kelowna.' + '<p>' + wifiStatus + '</p>' + 'Phone: ' + self.phone);
+      self.infowindow.open(map, self.marker);
+    });
     self.toggleBounce();
   });
 
-  //Full credit to google for this handy bounce toggle function. https://developers.google.com/maps/documentation/javascript/markers#animate
+  //Handy dandy google bounce function. https://developers.google.com/maps/documentation/javascript/markers#animate
   this.toggleBounce = function() {
     if (self.marker.getAnimation() !== null) {
       self.marker.setAnimation(null);
     } else {
       self.marker.setAnimation(google.maps.Animation.BOUNCE);
-      self.infowindow.open(map, self.marker);
+
       stopBounce(self.marker);
     }
   }
-  // Needed to find a way to stop the markers from bouncing. This is simply a timer function adapted from https://stackoverflow.com/questions/7339200/bounce-a-pin-in-google-maps-once
+
+  //Stops the markers from bouncing. This is simply a timer function adapted from https://stackoverflow.com/questions/7339200/bounce-a-pin-in-google-maps-once
   function stopBounce(marker) {
     setTimeout(function() {
       marker.setAnimation(null);
@@ -212,9 +200,13 @@ function AppViewModel() {
   var self = this;
   mapGenerator();
 
+  clientID = '1RPARC1P5UUSMHYUA1UZUXZW2UYSFWE0DZF5UMP2ELCML5RX';
+  clientSecret = 'N5W3RPZTDPVHDBCNLRZTANHTWRUERKP251YIJYSLSJOBARGR';
+
   this.allCafes = ko.observableArray([]);
   this.filter = ko.observable(false);
   this.buttonText = ko.observable();
+  this.case = ko.observable(1);
 
   cafes.forEach(function(objItem) {
     self.allCafes.push(new cafeLocation(objItem));
@@ -224,37 +216,44 @@ function AppViewModel() {
 
   // Big time praise for the man who put together this article on knockout utility functions. I couldn't have filtered markers without him!
   //http://www.knockmeout.net/2011/04/utility-functions-in-knockoutjs.html
-  //This filter function checks to see if the Cafes have Wifi.
   self.filterToggle = function() {
-
     if (self.filter() === false) {
       this.buttonText("Show All Cafes");
       self.filter(true);
+      this.case(2);
     } else if (self.filter() === true) {
       this.buttonText("Only show cafes with Wifi");
-      AppViewModel();
       self.filter(false);
+      this.case(1);
     }
   };
 
   this.filteredCafes = ko.computed(function() {
-    if (self.filter() === false) {
-      return self.allCafes();
-    } else if (self.filter() === true) {
-      return ko.utils.arrayFilter(self.allCafes(), function(cafeLocation) {
-        if (cafeLocation.wifi === false) {
-          cafeLocation.marker.setMap(null);
-        }
-        if (cafeLocation.wifi === true) {
+    switch (this.case()) {
+      case 1:
+        return ko.utils.arrayFilter(self.allCafes(), function(cafeLocation) {
+          cafeLocation.marker.setVisible(true);
           return cafeLocation;
-        }
-      });
+        });
+        break;
+      case 2:
+        return ko.utils.arrayFilter(self.allCafes(), function(cafeLocation) {
+          if (cafeLocation.wifi === false) {
+            cafeLocation.marker.setVisible(false);
+          }
+          if (cafeLocation.wifi === true) {
+            return cafeLocation;
+          }
+        });
+        break;
+
+      default:
+        return self.allCafes();
     }
   }, self);
 }
 
-//This function is ran when the google script it loaded and kicks off the app!
+//The ignition function! 
 function runApp() {
-  weatherReport();
   ko.applyBindings(new AppViewModel());
 }
