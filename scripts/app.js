@@ -149,7 +149,10 @@ var cafeLocation = function(data) {
       dataType: 'json',
       url: foursquareSearch,
       data: data.response,
-    });
+    })
+    .fail(function() {
+    alert( "Oops! The Foursquare API Failed. Please try again later." );
+  });
   }
 
 //Creates a new marker and places it on the map.
@@ -162,7 +165,19 @@ var cafeLocation = function(data) {
 
 //Creates a blank info window on each marker and waits until its clicked to insert data from data model and foursquare.
   this.infowindow = new google.maps.InfoWindow({});
-  this.marker.addListener('click', function() {
+
+  //Handy dandy google bounce function. https://developers.google.com/maps/documentation/javascript/markers#animate
+  this.toggleBounce = function() {
+    if (self.marker.getAnimation() !== null) {
+      self.marker.setAnimation(null);
+    } else {
+      self.marker.setAnimation(google.maps.Animation.BOUNCE);
+      self.infowindow.open(map, self.marker);
+      stopBounce(self.marker);
+    }
+  };
+
+    this.marker.addListener('click', function() {
     $.when(addressPull()).done(function(data) {
       if (data.response.venues[0].contact.formattedPhone === undefined) {
         self.phone = 'No number in database :(';
@@ -174,15 +189,9 @@ var cafeLocation = function(data) {
     self.toggleBounce();
   });
 
-  //Handy dandy google bounce function. https://developers.google.com/maps/documentation/javascript/markers#animate
-  this.toggleBounce = function() {
-    if (self.marker.getAnimation() !== null) {
-      self.marker.setAnimation(null);
-    } else {
-      self.marker.setAnimation(google.maps.Animation.BOUNCE);
-      self.infowindow.open(map, self.marker);
-      stopBounce(self.marker);
-    }
+// When the text on the left side on the screen is clicked, this will trigger the click event listener on the map marker.
+  this.menuClick = function() {
+    google.maps.event.trigger(self.marker, 'click');
   };
 
   //Stops the markers from bouncing. This is simply a timer function adapted from https://stackoverflow.com/questions/7339200/bounce-a-pin-in-google-maps-once
